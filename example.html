@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pikchr WASM example</title>
+<style>
+body {
+  margin: 50px;
+}
+#output {
+  border: 1px solid #ccc;
+  padding: 10px;
+
+}
+
+</style>
+</head>
+<body>
+  <script src="pikchr.js"></script>
+  <script>
+    let pikchr;
+
+    function update() {
+      const svgClass = "pikchr";
+      const pnWidthPtr = pikchr._malloc(4);
+      const pnHeightPtr = pikchr._malloc(4);
+
+      const inpEl = document.getElementById("input");
+      const source = inpEl.value;
+
+      const svg = pikchr.ccall(
+        "pikchr",
+        "string",
+        ["string", "string", "number", "number", "number"],
+        [source, svgClass, 0, pnWidthPtr, pnHeightPtr],
+      );
+
+      // Retrieve values from C
+      const pnWidth = pikchr.getValue(pnWidthPtr, "i32");
+      const pnHeight = pikchr.getValue(pnHeightPtr, "i32");
+
+      pikchr._free(pnWidthPtr);
+      pikchr._free(pnHeightPtr);
+      pikchr._free(svg);
+
+      const div = document.getElementById("output");
+      div.innerHTML = svg;
+      div.style = `width: ${pnWidth}px; height: ${pnHeight}px`;
+      document.body.append(div);
+    }
+
+    PikchrModule().then((m) => {
+      pikchr = m;
+      update();
+      const textarea = document.getElementById("input");
+
+      textarea.addEventListener("keydown", (event) => {
+        if (event.ctrlKey && event.key === "Enter") {
+          // Handle <Ctrl-Enter> event here
+          update();
+        }
+});
+    });
+  </script>
+
+<p>
+<kbd>Ctrl+Enter</kbd> to update the output.
+</p>
+
+<textarea id="input" rows="20" cols="100">
+MK: box "Makefile" ht .3 rad 0.2
+down
+A: arrow; "downloads" at last.e + (.3, 0) color 0xaaaaaa;
+move  to A.s 
+"pikchr.c"; right; arrow;
+CC: box "emcc" fill AliceBlue ht .3; arrow; "pikchr.js"
+down;
+A: arrow  <- dashed; 
+"loads" at last.e + (.2, 0) color 0xaaaaaa; 
+
+move to A.s; down
+ellipse "example.html" fill whitesmoke;
+
+arrow from MK.e then right until even with CC then to CC.n rad 0.5
+"runs" at last.ne + (.2,.1) color 0xaaaaaa; 
+</textarea>
+
+<p>Output:</p>
+<div id="output"></div>
+
+</body>
+</html>
+
